@@ -148,28 +148,24 @@ KBar_dic = Change_Cycle(Date,cycle_duration,KBar_dic)   ## 設定cycle_duration�
 KBar_df = pd.DataFrame(KBar_dic)
 
 ######  (i) 移動平均線
-st.subheader("K線圖, 移動平均線MA") 
+st.subheader("K線圖, 移動平均線 (MA)") 
 @st.cache_data(ttl=3600, show_spinner="正在加載資料...")  ## Add the caching decorator
 def Calculate_MA(df, period=10):
     ##### 計算長短移動平均線
     ma = df['close'].rolling(window=period).mean()
     return ma
   
-with st.expander("設定計算長短移動平均線(MA)的 K棒週期數目(整數, 例如 長10短2): "):
-     # #####  設定長短移動平均線的 K棒 長度:
-     # st.subheader("設定計算長移動平均線(MA)的 K棒週期數目(整數, 例如 10)")
-     LongMAPeriod=st.slider('選擇長移動平均線(MA)的 K棒週期數目', 0, 100, 10)
-     # st.subheader("設定計算短移動平均線(MA)的 K棒週期數目(整數, 例如 2)")
-     ShortMAPeriod=st.slider('選擇短移動平均線(MA)的 K棒週期數目', 0, 100, 2)
+with st.expander("設定移動平均線(MA)的相關參數: "):
+     LongMAPeriod=st.slider('選擇長移動平均線(MA)的 K棒週期數目(例如10)', 0, 100, 10)
+     ShortMAPeriod=st.slider('選擇短移動平均線(MA)的 K棒週期數目(例如2)', 0, 100, 2)
      ##### 計算長短移動平均線
      KBar_df['MA_long'] = Calculate_MA(KBar_df, period=LongMAPeriod)
      KBar_df['MA_short'] = Calculate_MA(KBar_df, period=ShortMAPeriod)
      ##### 尋找最後 NAN值的位置
      last_nan_index_MA = KBar_df['MA_long'][::-1].index[KBar_df['MA_long'][::-1].apply(pd.isna)][0]
 
-with st.expander("K線圖, 移動平均線"):
+with st.expander("K線圖, 移動平均線 (MA)"):
     fig1 = make_subplots(specs=[[{"secondary_y": True}]])
-   
     #### include candlestick with rangeselector
     fig1.add_trace(go.Candlestick(x=KBar_df['time'],
                    open=KBar_df['open'], high=KBar_df['high'],
@@ -188,130 +184,136 @@ with st.expander("K線圖, 移動平均線"):
 
 				
 
-	
+######  (ii) RSI 策略 
+st.subheader("K線圖, 相對強弱指標 (RSI)") 
+##### 假设 df 是一个包含价格数据的Pandas DataFrame，其中 'close' 是KBar週期收盤價
+@st.cache_data(ttl=3600, show_spinner="正在加載資料...")  ## Add the caching decorator
+def Calculate_RSI(df, period=14):
+    delta = df['close'].diff()
+    gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+    loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# ######  (ii) RSI 策略 
-# ##### 假设 df 是一个包含价格数据的Pandas DataFrame，其中 'close' 是KBar週期收盤價
-# @st.cache_data(ttl=3600, show_spinner="正在加載資料...")  ## Add the caching decorator
-# def Calculate_RSI(df, period=14):
-#     delta = df['close'].diff()
-#     gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
-#     loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
-
-#     rs = gain / loss
-#     rsi = 100 - (100 / (1 + rs))
-#     return rsi
+    rs = gain / loss
+    rsi = 100 - (100 / (1 + rs))
+    return rsi
   
-# ##### 順勢策略
-# #### 設定長短 RSI 的 K棒 長度:
-# st.subheader("設定計算長RSI的 K棒週期數目(整數, 例如 10)")
-# LongRSIPeriod=st.slider('選擇一個整數', 0, 1000, 10)
-# st.subheader("設定計算短RSI的 K棒週期數目(整數, 例如 2)")
-# ShortRSIPeriod=st.slider('選擇一個整數', 0, 1000, 2)
+with st.expander("設定RSI相關參數: "):
+    LongRSIPeriod=st.slider('設定長RSI的 K棒週期數目(整數, 例如 10)', 0, 1000, 10)
+    ShortRSIPeriod=st.slider('設定短RSI的 K棒週期數目(整數, 例如 2)', 0, 1000, 2)
+    ##### 計算 RSI指標長短線, 以及定義中線
+    KBar_df['RSI_long'] = Calculate_RSI(KBar_df, LongRSIPeriod)
+    KBar_df['RSI_short'] = Calculate_RSI(KBar_df, ShortRSIPeriod)
+    KBar_df['RSI_Middle']=np.array([50]*len(KBar_dic['time']))
+    ##### 尋找最後 NAN值的位置
+    last_nan_index_RSI = KBar_df['RSI_long'][::-1].index[KBar_df['RSI_long'][::-1].apply(pd.isna)][0]
 
-# #### 計算 RSI指標長短線, 以及定義中線
-# KBar_df['RSI_long'] = Calculate_RSI(KBar_df, LongRSIPeriod)
-# KBar_df['RSI_short'] = Calculate_RSI(KBar_df, ShortRSIPeriod)
-# KBar_df['RSI_Middle']=np.array([50]*len(KBar_dic['time']))
-
-# #### 尋找最後 NAN值的位置
-# last_nan_index_RSI = KBar_df['RSI_long'][::-1].index[KBar_df['RSI_long'][::-1].apply(pd.isna)][0]
-
-
-# # ##### 逆勢策略
-# # #### 建立部位管理物件
-# # OrderRecord=Record() 
-# # #### 計算 RSI指標, 天花板與地板
-# # RSIPeriod=5
-# # Ceil=80
-# # Floor=20
-# # MoveStopLoss=30
-# # KBar_dic['RSI']=RSI(KBar_dic,timeperiod=RSIPeriod)
-# # KBar_dic['Ceil']=np.array([Ceil]*len(KBar_dic['time']))
-# # KBar_dic['Floor']=np.array([Floor]*len(KBar_dic['time']))
-
-# # #### 將K線 Dictionary 轉換成 Dataframe
-# # KBar_RSI_df=pd.DataFrame(KBar_dic)
+with st.expander("K線圖, 長短 RSI"):
+    fig2 = make_subplots(specs=[[{"secondary_y": True}]])
+    #### include candlestick with rangeselector
+    fig2.add_trace(go.Candlestick(x=KBar_df['time'],
+                    open=KBar_df['open'], high=KBar_df['high'],
+                    low=KBar_df['low'], close=KBar_df['close'], name='K線'),
+                    secondary_y=True)   ## secondary_y=True 表示此圖形的y軸scale是在右邊而不是在左邊
+    
+    fig2.add_trace(go.Scatter(x=KBar_df['time'][last_nan_index_RSI+1:], y=KBar_df['RSI_long'][last_nan_index_RSI+1:], mode='lines',line=dict(color='red', width=2), name=f'{LongRSIPeriod}-根 K棒 移動 RSI'), 
+                  secondary_y=False)
+    fig2.add_trace(go.Scatter(x=KBar_df['time'][last_nan_index_RSI+1:], y=KBar_df['RSI_short'][last_nan_index_RSI+1:], mode='lines',line=dict(color='blue', width=2), name=f'{ShortRSIPeriod}-根 K棒 移動 RSI'), 
+                  secondary_y=False)
+    
+    fig2.layout.yaxis2.showgrid=True
+    st.plotly_chart(fig2, use_container_width=True)
 
 
-# ######  (iii) Bollinger Band (布林通道) 策略 
-# ##### 假设df是包含价格数据的Pandas DataFrame，'close'列是每日收盘价格
-# @st.cache_data(ttl=3600, show_spinner="正在加載資料...")  ## Add the caching decorator
-# def Calculate_Bollinger_Bands(df, period=20, num_std_dev=2):
-#     df['SMA'] = df['close'].rolling(window=period).mean()
-#     df['Standard_Deviation'] = df['close'].rolling(window=period).std()
-#     df['Upper_Band'] = df['SMA'] + (df['Standard_Deviation'] * num_std_dev)
-#     df['Lower_Band'] = df['SMA'] - (df['Standard_Deviation'] * num_std_dev)
-#     return df
 
 
-# #####  設定長短移動平均線的 K棒 長度:
-# st.subheader("設定計算布林通道(Bollinger Band)上中下三通道之K棒週期數目(整數, 例如 20)")
-# period = st.slider('選擇一個整數', 0, 100, 20, key='BB_period')
-# st.subheader("設定計算布林通道(Bollinger Band)上中(或下中)通道之帶寬(例如 2 代表上中通道寬度為2倍的標準差)")
-# num_std_dev = st.slider('選擇一個整數', 0, 100, 2, key='BB_heigh')
 
-# ##### 計算布林通道上中下通道:
-# KBar_df = Calculate_Bollinger_Bands(KBar_df, period, num_std_dev)
+######  (iii) Bollinger Band (布林通道) 策略 
+st.subheader("K線圖, 布林通道 (Bollinger Band)") 
+##### 假设df是包含价格数据的Pandas DataFrame，'close'列是每日收盘价格
+@st.cache_data(ttl=3600, show_spinner="正在加載資料...")  ## Add the caching decorator
+def Calculate_Bollinger_Bands(df, period=20, num_std_dev=2):
+    df['SMA'] = df['close'].rolling(window=period).mean()
+    df['Standard_Deviation'] = df['close'].rolling(window=period).std()
+    df['Upper_Band'] = df['SMA'] + (df['Standard_Deviation'] * num_std_dev)
+    df['Lower_Band'] = df['SMA'] - (df['Standard_Deviation'] * num_std_dev)
+    return df
 
-# ##### 尋找最後 NAN值的位置
-# last_nan_index_BB = KBar_df['SMA'][::-1].index[KBar_df['SMA'][::-1].apply(pd.isna)][0]
+with st.expander("設定布林通道相關參數: "):
+    period = st.slider('設定布林通道上中下三通道之K棒週期數目(整數, 例如 20)', 0, 100, 20, key='BB_period')
+    num_std_dev = st.slider('設定布林通道上中(或下中)通道之帶寬(例如 2 代表上中通道寬度為2倍的標準差)', 0, 100, 2, key='BB_heigh')
+    ##### 計算布林通道上中下通道:
+    KBar_df = Calculate_Bollinger_Bands(KBar_df, period, num_std_dev)
+    ##### 尋找最後 NAN值的位置
+    last_nan_index_BB = KBar_df['SMA'][::-1].index[KBar_df['SMA'][::-1].apply(pd.isna)][0]
 
+with st.expander("K線圖, 布林通道"):
+    fig3 = make_subplots(specs=[[{"secondary_y": True}]])
+    fig3.add_trace(go.Candlestick(x=KBar_df['time'],
+                    open=KBar_df['open'], high=KBar_df['high'],
+                    low=KBar_df['low'], close=KBar_df['close'], name='K線'),
+                    secondary_y=True)    
+    fig3.add_trace(go.Scatter(x=KBar_df['time'][last_nan_index_BB+1:], y=KBar_df['SMA'][last_nan_index_BB+1:], mode='lines',line=dict(color='black', width=2), name='布林通道中軌道'), 
+                  secondary_y=False)
+    fig3.add_trace(go.Scatter(x=KBar_df['time'][last_nan_index_BB+1:], y=KBar_df['Upper_Band'][last_nan_index_BB+1:], mode='lines',line=dict(color='red', width=2), name='布林通道上軌道'), 
+                  secondary_y=False)
+    fig3.add_trace(go.Scatter(x=KBar_df['time'][last_nan_index_BB+1:], y=KBar_df['Lower_Band'][last_nan_index_BB+1:], mode='lines',line=dict(color='blue', width=2), name='布林通道下軌道'), 
+                  secondary_y=False)
+    
+    fig3.layout.yaxis2.showgrid=True
 
-# ######  (iv) MACD(異同移動平均線) 策略 
-# # 假设df是包含价格数据的Pandas DataFrame，'price'列是每日收盘价格
-# @st.cache_data(ttl=3600, show_spinner="正在加載資料...")  ## Add the caching decorator
-# def Calculate_MACD(df, fast_period=12, slow_period=26, signal_period=9):
-#     df['EMA_Fast'] = df['close'].ewm(span=fast_period, adjust=False).mean()
-#     df['EMA_Slow'] = df['close'].ewm(span=slow_period, adjust=False).mean()
-#     df['MACD'] = df['EMA_Fast'] - df['EMA_Slow']  ## DIF
-#     df['Signal_Line'] = df['MACD'].ewm(span=signal_period, adjust=False).mean()   ## DEA或信號線
-#     df['MACD_Histogram'] = df['MACD'] - df['Signal_Line']  ## MACD = DIF-DEA
-#     return df
-
-# #####  設定MACD三種週期的K棒長度:
-# st.subheader("設定計算 MACD的快速線週期(例如 12根日K)")
-# fast_period = st.slider('選擇一個整數', 0, 100, 12)
-# st.subheader("設定計算 MACD的慢速線週期(例如 26根日K)")
-# slow_period = st.slider('選擇一個整數', 0, 100, 26)
-# st.subheader("設定計算 MACD的訊號線週期(例如 9根日K)")
-# signal_period = st.slider('選擇一個整數', 0, 100, 9)
-
-# ##### 計算MACD:
-# KBar_df = Calculate_MACD(KBar_df, fast_period, slow_period, signal_period)
-
-# ##### 尋找最後 NAN值的位置
-# # last_nan_index_MACD = KBar_df['MACD'][::-1].index[KBar_df['MACD'][::-1].apply(pd.isna)][0]
-# #### 試著找出最後一個 NaN 值的索引，但在這之前要檢查是否有 NaN 值
-# nan_indexes_MACD = KBar_df['MACD'][::-1].index[KBar_df['MACD'][::-1].apply(pd.isna)]
-# if len(nan_indexes_MACD) > 0:
-#     last_nan_index_MACD = nan_indexes_MACD[0]
-# else:
-#     last_nan_index_MACD = 0
+    st.plotly_chart(fig3, use_container_width=True)
 
 
+
+
+######  (iv) MACD(異同移動平均線) 策略 
+st.subheader("異同移動平均線 (MACD)") 
+##### 假设df是包含价格数据的Pandas DataFrame，'price'列是每日收盘价格
+@st.cache_data(ttl=3600, show_spinner="正在加載資料...")  ## Add the caching decorator
+def Calculate_MACD(df, fast_period=12, slow_period=26, signal_period=9):
+    df['EMA_Fast'] = df['close'].ewm(span=fast_period, adjust=False).mean()
+    df['EMA_Slow'] = df['close'].ewm(span=slow_period, adjust=False).mean()
+    df['MACD'] = df['EMA_Fast'] - df['EMA_Slow']  ## DIF
+    df['Signal_Line'] = df['MACD'].ewm(span=signal_period, adjust=False).mean()   ## DEA或信號線
+    df['MACD_Histogram'] = df['MACD'] - df['Signal_Line']  ## MACD = DIF-DEA
+    return df
+
+with st.expander("設定異同移動平均線 (MACD)相關參數: "):
+    #####  設定MACD三種週期的K棒長度:
+    fast_period = st.slider('設定計算 MACD的快速線週期(例如 12根日K)', 0, 100, 12)
+    slow_period = st.slider('設定計算 MACD的慢速線週期(例如 26根日K)', 0, 100, 26)
+    signal_period = st.slider('設定計算 MACD的訊號線週期(例如 9根日K)', 0, 100, 9)
+
+    ##### 計算MACD:
+    KBar_df = Calculate_MACD(KBar_df, fast_period, slow_period, signal_period)
+    
+    ##### 尋找最後 NAN值的位置
+    # last_nan_index_MACD = KBar_df['MACD'][::-1].index[KBar_df['MACD'][::-1].apply(pd.isna)][0]
+    #### 試著找出最後一個 NaN 值的索引，但在這之前要檢查是否有 NaN 值
+    nan_indexes_MACD = KBar_df['MACD'][::-1].index[KBar_df['MACD'][::-1].apply(pd.isna)]
+    if len(nan_indexes_MACD) > 0:
+        last_nan_index_MACD = nan_indexes_MACD[0]
+    else:
+        last_nan_index_MACD = 0
+
+with st.expander("異同移動平均線(MACD)"):
+    fig4 = make_subplots(specs=[[{"secondary_y": True}]])
+    
+    # #### include candlestick with rangeselector
+    # fig4.add_trace(go.Candlestick(x=KBar_df['Time'],
+    #                 open=KBar_df['Open'], high=KBar_df['High'],
+    #                 low=KBar_df['Low'], close=KBar_df['Close'], name='K線'),
+    #                secondary_y=True)   ## secondary_y=True 表示此圖形的y軸scale是在右邊而不是在左邊
+    
+    #### include a go.Bar trace for volumes
+    fig4.add_trace(go.Bar(x=KBar_df['Time'], y=KBar_df['MACD_Histogram'], name='MACD Histogram', marker=dict(color='black')),secondary_y=False)  ## secondary_y=False 表示此圖形的y軸scale是在左邊而不是在右邊
+    fig4.add_trace(go.Scatter(x=KBar_df['Time'][last_nan_index_MACD+1:], y=KBar_df['Signal_Line'][last_nan_index_MACD+1:], mode='lines',line=dict(color='orange', width=2), name='訊號線(DEA)'), 
+                  secondary_y=True)
+    fig4.add_trace(go.Scatter(x=KBar_df['Time'][last_nan_index_MACD+1:], y=KBar_df['MACD'][last_nan_index_MACD+1:], mode='lines',line=dict(color='pink', width=2), name='DIF'), 
+                  secondary_y=True)
+    
+    fig4.layout.yaxis2.showgrid=True
+    st.plotly_chart(fig4, use_container_width=True)
 
 
 
@@ -349,7 +351,7 @@ with st.expander("K線圖, 移動平均線"):
 #     fig1.add_trace(go.Candlestick(x=KBar_df['Time'],
 #                     open=KBar_df['Open'], high=KBar_df['High'],
 #                     low=KBar_df['Low'], close=KBar_df['Close'], name='K線'),
-#                    secondary_y=True)   ## secondary_y=True 表示此圖形的y軸scale是在右邊而不是在左邊
+#                     secondary_y=True)   ## secondary_y=True 表示此圖形的y軸scale是在右邊而不是在左邊
     
 #     #### include a go.Bar trace for volumes
 #     fig1.add_trace(go.Bar(x=KBar_df['Time'], y=KBar_df['Volume'], name='成交量', marker=dict(color='black')),secondary_y=False)  ## secondary_y=False 表示此圖形的y軸scale是在左邊而不是在右邊
@@ -369,7 +371,7 @@ with st.expander("K線圖, 移動平均線"):
 #     fig2.add_trace(go.Candlestick(x=KBar_df['Time'],
 #                     open=KBar_df['Open'], high=KBar_df['High'],
 #                     low=KBar_df['Low'], close=KBar_df['Close'], name='K線'),
-#                    secondary_y=True)   ## secondary_y=True 表示此圖形的y軸scale是在右邊而不是在左邊
+#                     secondary_y=True)   ## secondary_y=True 表示此圖形的y軸scale是在右邊而不是在左邊
     
 #     fig2.add_trace(go.Scatter(x=KBar_df['Time'][last_nan_index_RSI+1:], y=KBar_df['RSI_long'][last_nan_index_RSI+1:], mode='lines',line=dict(color='red', width=2), name=f'{LongRSIPeriod}-根 K棒 移動 RSI'), 
 #                   secondary_y=False)
@@ -386,7 +388,7 @@ with st.expander("K線圖, 移動平均線"):
 #     fig3.add_trace(go.Candlestick(x=KBar_df['Time'],
 #                     open=KBar_df['Open'], high=KBar_df['High'],
 #                     low=KBar_df['Low'], close=KBar_df['Close'], name='K線'),
-#                    secondary_y=True)    
+#                     secondary_y=True)    
 #     fig3.add_trace(go.Scatter(x=KBar_df['Time'][last_nan_index_BB+1:], y=KBar_df['SMA'][last_nan_index_BB+1:], mode='lines',line=dict(color='black', width=2), name='布林通道中軌道'), 
 #                   secondary_y=False)
 #     fig3.add_trace(go.Scatter(x=KBar_df['Time'][last_nan_index_BB+1:], y=KBar_df['Upper_Band'][last_nan_index_BB+1:], mode='lines',line=dict(color='red', width=2), name='布林通道上軌道'), 
