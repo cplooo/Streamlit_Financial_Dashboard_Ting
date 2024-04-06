@@ -29,8 +29,8 @@ import plotly.offline as pyoff
 ###### 設定網頁標題介面 
 html_temp = """
 		<div style="background-color:#7FDBFF;padding:10px;border-radius:10px">   
-		<h1 style="color:pink;text-align:center;">金融資料視覺化看板 </h1>
-		<h2 style="color:pink;text-align:center;">Financial Dashboard </h2>
+		<h1 style="color:#FF1493;text-align:center;">金融資料視覺化看板 </h1>
+		<h2 style="color:#FF1493;text-align:center;">Financial Dashboard </h2>
 		</div>
 		"""
 stc.html(html_temp)
