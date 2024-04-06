@@ -300,16 +300,16 @@ with st.expander("異同移動平均線(MACD)"):
     fig4 = make_subplots(specs=[[{"secondary_y": True}]])
     
     # #### include candlestick with rangeselector
-    # fig4.add_trace(go.Candlestick(x=KBar_df['Time'],
-    #                 open=KBar_df['Open'], high=KBar_df['High'],
-    #                 low=KBar_df['Low'], close=KBar_df['Close'], name='K線'),
+    # fig4.add_trace(go.Candlestick(x=KBar_df['time'],
+    #                 open=KBar_df['open'], high=KBar_df['high'],
+    #                 low=KBar_df['low'], close=KBar_df['close'], name='K線'),
     #                secondary_y=True)   ## secondary_y=True 表示此圖形的y軸scale是在右邊而不是在左邊
     
     #### include a go.Bar trace for volumes
-    fig4.add_trace(go.Bar(x=KBar_df['Time'], y=KBar_df['MACD_Histogram'], name='MACD Histogram', marker=dict(color='black')),secondary_y=False)  ## secondary_y=False 表示此圖形的y軸scale是在左邊而不是在右邊
-    fig4.add_trace(go.Scatter(x=KBar_df['Time'][last_nan_index_MACD+1:], y=KBar_df['Signal_Line'][last_nan_index_MACD+1:], mode='lines',line=dict(color='orange', width=2), name='訊號線(DEA)'), 
+    fig4.add_trace(go.Bar(x=KBar_df['time'], y=KBar_df['MACD_Histogram'], name='MACD Histogram', marker=dict(color='black')),secondary_y=False)  ## secondary_y=False 表示此圖形的y軸scale是在左邊而不是在右邊
+    fig4.add_trace(go.Scatter(x=KBar_df['time'][last_nan_index_MACD+1:], y=KBar_df['Signal_Line'][last_nan_index_MACD+1:], mode='lines',line=dict(color='orange', width=2), name='訊號線(DEA)'), 
                   secondary_y=True)
-    fig4.add_trace(go.Scatter(x=KBar_df['Time'][last_nan_index_MACD+1:], y=KBar_df['MACD'][last_nan_index_MACD+1:], mode='lines',line=dict(color='pink', width=2), name='DIF'), 
+    fig4.add_trace(go.Scatter(x=KBar_df['time'][last_nan_index_MACD+1:], y=KBar_df['MACD'][last_nan_index_MACD+1:], mode='lines',line=dict(color='pink', width=2), name='DIF'), 
                   secondary_y=True)
     
     fig4.layout.yaxis2.showgrid=True
@@ -328,10 +328,6 @@ with st.expander("異同移動平均線(MACD)"):
 # ####### (5) 將 Dataframe 欄位名稱轉換(第一個字母大寫)  ####### 
 # KBar_df_original = KBar_df
 # KBar_df.columns = [ i[0].upper()+i[1:] for i in KBar_df.columns ]
-
-
-
-
 
 
 # ####### (6) 畫圖 #######
