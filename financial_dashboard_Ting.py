@@ -143,53 +143,48 @@ KBar_dic = Change_Cycle(Date,cycle_duration,KBar_dic)   ## 設定cycle_duration�
 
 
 
-####### (4) 計算各種技術指標 #######
+####### (4) 各種技術指標視覺化 #######
 ###### 將K線 Dictionary 轉換成 Dataframe
 KBar_df = pd.DataFrame(KBar_dic)
 
-######  (i) 移動平均線策略 
+######  (i) 移動平均線
+st.subheader("K線圖, 移動平均線MA") 
 @st.cache_data(ttl=3600, show_spinner="正在加載資料...")  ## Add the caching decorator
 def Calculate_MA(df, period=10):
     ##### 計算長短移動平均線
     ma = df['close'].rolling(window=period).mean()
     return ma
   
+with st.expander("設定計算長短移動平均線(MA)的 K棒週期數目(整數, 例如 長10短2): "):
+     # #####  設定長短移動平均線的 K棒 長度:
+     # st.subheader("設定計算長移動平均線(MA)的 K棒週期數目(整數, 例如 10)")
+     LongMAPeriod=st.slider('選擇長移動平均線(MA)的 K棒週期數目', 0, 100, 10)
+     # st.subheader("設定計算短移動平均線(MA)的 K棒週期數目(整數, 例如 2)")
+     ShortMAPeriod=st.slider('選擇短移動平均線(MA)的 K棒週期數目', 0, 100, 2)
+     ##### 計算長短移動平均線
+     KBar_df['MA_long'] = Calculate_MA(KBar_df, period=LongMAPeriod)
+     KBar_df['MA_short'] = Calculate_MA(KBar_df, period=ShortMAPeriod)
+     ##### 尋找最後 NAN值的位置
+     last_nan_index_MA = KBar_df['MA_long'][::-1].index[KBar_df['MA_long'][::-1].apply(pd.isna)][0]
 
-##### K線圖, 移動平均線MA
-#### Layouts
-col1,col2 = st.columns([1,2]) 
-with col1:
-	with st.expander("設定計算長短移動平均線(MA)的 K棒週期數目(整數, 例如 長10短2): "):
-         # #####  設定長短移動平均線的 K棒 長度:
-         # st.subheader("設定計算長移動平均線(MA)的 K棒週期數目(整數, 例如 10)")
-         LongMAPeriod=st.slider('選擇長移動平均線(MA)的 K棒週期數目', 0, 100, 10)
-         # st.subheader("設定計算短移動平均線(MA)的 K棒週期數目(整數, 例如 2)")
-         ShortMAPeriod=st.slider('選擇短移動平均線(MA)的 K棒週期數目', 0, 100, 2)
-         ##### 計算長短移動平均線
-         KBar_df['MA_long'] = Calculate_MA(KBar_df, period=LongMAPeriod)
-         KBar_df['MA_short'] = Calculate_MA(KBar_df, period=ShortMAPeriod)
-         ##### 尋找最後 NAN值的位置
-         last_nan_index_MA = KBar_df['MA_long'][::-1].index[KBar_df['MA_long'][::-1].apply(pd.isna)][0]
-
-with col2:
-	with st.expander("K線圖, 移動平均線"):
-         fig1 = make_subplots(specs=[[{"secondary_y": True}]])
-        
-         #### include candlestick with rangeselector
-         fig1.add_trace(go.Candlestick(x=KBar_df['time'],
-                        open=KBar_df['open'], high=KBar_df['high'],
-                        low=KBar_df['low'], close=KBar_df['close'], name='K線'),
-                       secondary_y=True)   ## secondary_y=True 表示此圖形的y軸scale是在右邊而不是在左邊
-        
-         #### include a go.Bar trace for volumes
-         fig1.add_trace(go.Bar(x=KBar_df['time'], y=KBar_df['volume'], name='成交量', marker=dict(color='black')),secondary_y=False)  ## secondary_y=False 表示此圖形的y軸scale是在左邊而不是在右邊
-         fig1.add_trace(go.Scatter(x=KBar_df['time'][last_nan_index_MA+1:], y=KBar_df['MA_long'][last_nan_index_MA+1:], mode='lines',line=dict(color='orange', width=2), name=f'{LongMAPeriod}-根 K棒 移動平均線'), 
-                      secondary_y=True)
-         fig1.add_trace(go.Scatter(x=KBar_df['time'][last_nan_index_MA+1:], y=KBar_df['MA_short'][last_nan_index_MA+1:], mode='lines',line=dict(color='pink', width=2), name=f'{ShortMAPeriod}-根 K棒 移動平均線'), 
-                      secondary_y=True)
-        
-         fig1.layout.yaxis2.showgrid=True
-         st.plotly_chart(fig1, use_container_width=True)
+with st.expander("K線圖, 移動平均線"):
+    fig1 = make_subplots(specs=[[{"secondary_y": True}]])
+   
+    #### include candlestick with rangeselector
+    fig1.add_trace(go.Candlestick(x=KBar_df['time'],
+                   open=KBar_df['open'], high=KBar_df['high'],
+                   low=KBar_df['low'], close=KBar_df['close'], name='K線'),
+                  secondary_y=True)   ## secondary_y=True 表示此圖形的y軸scale是在右邊而不是在左邊
+   
+    #### include a go.Bar trace for volumes
+    fig1.add_trace(go.Bar(x=KBar_df['time'], y=KBar_df['volume'], name='成交量', marker=dict(color='black')),secondary_y=False)  ## secondary_y=False 表示此圖形的y軸scale是在左邊而不是在右邊
+    fig1.add_trace(go.Scatter(x=KBar_df['time'][last_nan_index_MA+1:], y=KBar_df['MA_long'][last_nan_index_MA+1:], mode='lines',line=dict(color='orange', width=2), name=f'{LongMAPeriod}-根 K棒 移動平均線'), 
+                 secondary_y=True)
+    fig1.add_trace(go.Scatter(x=KBar_df['time'][last_nan_index_MA+1:], y=KBar_df['MA_short'][last_nan_index_MA+1:], mode='lines',line=dict(color='pink', width=2), name=f'{ShortMAPeriod}-根 K棒 移動平均線'), 
+                 secondary_y=True)
+   
+    fig1.layout.yaxis2.showgrid=True
+    st.plotly_chart(fig1, use_container_width=True)
 
 				
 
